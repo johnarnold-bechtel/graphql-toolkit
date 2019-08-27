@@ -73,7 +73,32 @@ export async function loadTypedefs<AdditionalConfig = any>(pointToSchema: string
     const relevantFiles = await globby(foundGlobs, { cwd, absolute: true });
 
     if (relevantFiles.length > 0) {
-      found.push(...(await Promise.all(relevantFiles.map(async p => ({ filePath: p, content: await loadSingleFile(p, { skipGraphQLImport: options.skipGraphQLImport, noRequire: options.noRequire, tagPluck: options.tagPluck || {} }, cwd) })))));
+      found.push(
+        ...(await Promise.all(
+          relevantFiles
+            .sort((a, b) => {
+              if (a.filePath < b.filePath) {
+                return -1;
+              }
+              if (a.filePath > b.filePath) {
+                return 1;
+              }
+              return 0;
+            })
+            .map(async p => ({
+              filePath: p,
+              content: await loadSingleFile(
+                p,
+                {
+                  skipGraphQLImport: options.skipGraphQLImport,
+                  noRequire: options.noRequire,
+                  tagPluck: options.tagPluck || {},
+                },
+                cwd
+              ),
+            }))
+        ))
+      );
     }
   }
 
